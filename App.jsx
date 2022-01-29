@@ -8,65 +8,58 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  SafeAreaView,
+  Dimensions,
 } from "react-native";
-import react, { useState } from "react";
-import Task from "./components/Tasks/Task";
-
+import Chart from "./components/Chart/Chart";
+import react, { useState, useEffect } from "react";
+import Card from "./components/Card/Card";
+import axios from "axios";
 export default function App() {
-  const [task, setTask] = useState();
-  const [taskItems, setTaskItems] = useState([]);
+  const [covidCases, setCovidCases] = useState([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const getData = async () => {
+      axios
+        .get("https://covid19.ddc.moph.go.th/api/Cases/timeline-cases-all")
+        .then((res) => {
+          setCovidCases(res.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    };
+    const timer = setTimeout(() => {
+      getData();
+      setLoading(true)
+    }, 5000);
 
-  const handleAddTask = () => {
-    setTaskItems([...taskItems, task]);
-    setTask(null);
-  };
-  const completeTask = (index) => {
-    let itemsCopy = [...taskItems];
-    itemsCopy.splice(index, 1);
-    setTaskItems(itemsCopy);
-  };
+    return () => clearTimeout(timer);
+
+  }, []);
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.taskWarping}>
-          <Text style={styles.text}>Today's Tasks</Text>
-          <View style={styles.items}>
-            {taskItems.map((task, i) => (
-              <>
-                <TouchableOpacity onPress={(index) => completeTask()}>
-                  <Task task={task} key={i} />
-                </TouchableOpacity>
-              </>
-            ))}
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <ScrollView keyboardShouldPersistTaps="handled">
+          <View style={styles.headersBox}>
+            <Text style={styles.totalCase}></Text>
+
+            <Text style={styles.totalCaseNum}>{covidCases[0].total_case}</Text>
+            <Text style={styles.totalCase}>Total Case Today</Text>
           </View>
-        </View>
-      </ScrollView>
-      <View>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.writeTask}
-        >
-          <TextInput
-            style={styles.input}
-            placeholder={"tasking !"}
-            onChangeText={(text) => {
-              setTask(text);
-            }}
-            clearButtonMode="while-editing"
-          ></TextInput>
-          <TouchableOpacity disabled={!task ? true : false} onPress={() => handleAddTask()}>
-            <View style={styles.addWrapper}>
-              <Text style={styles.addtext}> +</Text>
-            </View>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </View>
+          <View style={styles.stackBox}>
+            <Card
+              newCase={covidCases[0].new_case}
+              recoveredCase={covidCases[0].new_recovered}
+            ></Card>
+          </View>
+
+          <Chart covidCases={covidCases} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -74,49 +67,50 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    justifyContent: "space-between",
-  },
-  taskWarping: {
-    paddingTop: 80,
-    paddingHorizontal: 20,
-  },
-  text: {
-    fontSize: 30,
-    fontWeight: "700",
-  },
-  items: {
-    marginTop: 30,
-  },
-
-  writeTask: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-    marginBottom: 60,
-  },
-  input: {
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    backgroundColor: "#FFF",
-    borderRadius: 60,
-    borderColor: "#C0C0C0",
-    borderWidth: 1,
-    width: 250,
-  },
-  addWrapper: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#FFF",
-    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
-    borderColor: "#C0C0C0",
-    borderWidth: 1,
+    flexDirection: "column",
+    backgroundColor: "#f8f8f8",
   },
-  addtext: {
-    fontSize: 26,
-    fontWeight: "500",
+  headersBox: {
+    flex: 1,
+    flexDirection: "column",
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height * 0.3,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1A374D",
+  },
+  stackBox: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: Dimensions.get("window").width * 0.8,
+    height: Dimensions.get("window").height * 0.1,
+
+    borderRadius: 10,
+    zIndex: 2,
+    position: "absolute",
+    top: Dimensions.get("window").width * 0.52,
+    left: Dimensions.get("window").width * 0.1,
+  },
+  totalCase: {
+    fontSize: 20,
+    fontWeight: "300",
+    color: "#ffff",
+  },
+  totalCaseNum: {
+    fontSize: 30,
+    fontWeight: "bold",
+    color: "#ffff",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  shadowProp: {
+    shadowColor: "#171717",
+    shadowOffset: { width: -2, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
 });
