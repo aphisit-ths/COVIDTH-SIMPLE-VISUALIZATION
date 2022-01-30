@@ -1,1 +1,1 @@
-> # very simple todo app with react native :) 
+> # thailand Covid simple visualization with react native :) 
