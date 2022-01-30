@@ -1,1 +1,1 @@
-> # thailand Covid simple visualization with react native :) 
+> # Thailand covid simple visualization with react native :) 
